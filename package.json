@@ -4,7 +4,9 @@
   "description": "Enables VPN support within Gaming Mode.",
   "scripts": {
     "build": "shx rm -rf dist && rollup -c",
-    "watch": "rollup -c -w"
+    "watch": "rollup -c -w",
+    "package": "npm run build && shx rm -rf out *.zip && shx mkdir -p out && shx cp -r dist out/ && shx cp plugin.json main.py package.json LICENSE README.md out/ && zip -rq tunneldeck-${npm_package_version}.zip out/*"
+
   },
   "repository": {
     "type": "git",

@@ -113,19 +113,6 @@ def get_active_connection() -> Optional[Connection]:
     mapped = map(connection_mapper, result.stdout.splitlines())
     return next(filter(lambda xn: 'wireless' in xn["type"] or 'ethernet' in xn["type"], mapped), None)
 
-
-def run_install_script() -> None:
-    logger.info("Running Install Script")
-    subprocess.run(["bash", path.dirname(__file__) + "/extensions/install"],
-                   cwd=path.dirname(__file__) + "/extensions")
-
-
-def run_uninstall_script() -> None:
-    logger.info("Running Uninstall Script")
-    subprocess.run(["bash", path.dirname(__file__) + "/extensions/uninstall"],
-                   cwd=path.dirname(__file__) + "/extensions")
-
-
 def log_pretty(obj: Any) -> str:
     pp = pprint.PrettyPrinter(indent=2, sort_dicts=False)
     return f"{pp.pformat(obj)}"
@@ -158,14 +145,10 @@ class Plugin:
         await self.reset_cached_data()
         openvpn_enabled: bool = self.settings.getSetting("openvpn_enabled", False)
         logger.info("OpenVPN enabled: %s", "yes" if openvpn_enabled else "no")
-        if openvpn_enabled:
-            run_install_script()
 
     async def _unload(self) -> None:
         openvpn_enabled: bool = self.settings.getSetting("openvpn_enabled", False)
         logger.info("OpenVPN enabled: %s", "yes" if openvpn_enabled else "no")
-        if openvpn_enabled:
-            run_uninstall_script()
 
     # endregion
 
@@ -471,7 +454,6 @@ class Plugin:
         logger.info("Enabling OpenVPN")
         await self.reset_cached_data()
         self.settings.setSetting("openvpn_enabled", True)
-        run_install_script()
         return True
 
     # Disable OpenVPN
@@ -479,7 +461,6 @@ class Plugin:
         logger.info("Disabling OpenVPN")
         await self.reset_cached_data()
         self.settings.setSetting("openvpn_enabled", False)
-        run_uninstall_script()
         return True
 
     # endregion
