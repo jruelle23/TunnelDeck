@@ -7,6 +7,7 @@ import traceback
 from os import path
 from typing import Any, Optional, TypedDict
 
+# TODO redo the import of decky to match current standard
 # These modules are provided by the Decky runtime and are not resolvable outside the Steam Deck.
 from settings import SettingsManager  # type: ignore[import-not-found]
 from helpers import get_user  # type: ignore[import-not-found]

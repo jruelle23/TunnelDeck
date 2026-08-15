@@ -56,6 +56,7 @@ const getPrioritizedNetworkInfo = callable<[], NetworkResponse>("get_prioritized
 
 
 let interfaceCheckerId: number;
+//TODO check if still applicable with React 19
 // For some reason, setting setIsRefreshing doesn't update the code side of the understanding.
 // So have to make my own variable that does the exact same thing... lol...
 let isActuallyRefreshing = true;
@@ -160,6 +161,7 @@ const Content: FC = () => {
       setActiveConnection(activeConn);
       setIpv6Disabled(!!(activeConn.ipv6_disabled));
     } catch (error) {
+      //TODO add proper error handling on all catches
       console.error(error);
     }
 
@@ -240,7 +242,7 @@ const Content: FC = () => {
     <>
       <PanelSection title="Connections">
 
-        {loaded && connections.length == 0 && <PanelSectionRow>
+        {loaded && connections.length === 0 && <PanelSectionRow>
           No Connections Found
         </PanelSectionRow>}
 
@@ -322,7 +324,7 @@ const Content: FC = () => {
       </PanelSection>
       <PanelSection title="Additional network info" spinner={isRefreshing}>
 
-        {loaded && priorityNetworkInfo.length == 0 && <PanelSectionRow>
+        {loaded && priorityNetworkInfo.length === 0 && <PanelSectionRow>
           No Network Info found
         </PanelSectionRow>}
 
