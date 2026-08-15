@@ -4,17 +4,8 @@ import pprint
 import re
 import subprocess
 import traceback
-from os import path
 from typing import Any, Optional, TypedDict
-
-# TODO redo the import of decky to match current standard
-# These modules are provided by the Decky runtime and are not resolvable outside the Steam Deck.
-from settings import SettingsManager  # type: ignore[import-not-found]
-from helpers import get_user  # type: ignore[import-not-found]
-
-USER: str = get_user()
-HOME_PATH: str = "/home/" + USER
-HOMEBREW_PATH: str = HOME_PATH + "/homebrew"
+from settings import SettingsManager
 
 logging.basicConfig(filename="/tmp/tunneldeck.log",
                     format="[TunnelDeck] %(asctime)s %(levelname)s %(message)s",
@@ -136,7 +127,7 @@ def empty_cached_data() -> CachedData:
 
 
 class Plugin:
-    settings: SettingsManager = SettingsManager("tunneldeck", path.join(HOMEBREW_PATH, "settings"))
+    settings: SettingsManager = SettingsManager("tunneldeck")
     # Cached data to prevent redundant calls.
     current_data: CachedData = empty_cached_data()
 
