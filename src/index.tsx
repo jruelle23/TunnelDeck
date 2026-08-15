@@ -10,7 +10,7 @@ import { callable, definePlugin } from "@decky/api";
 
 import { FC, useEffect, useState } from "react";
 
-import { FaShieldAlt } from "react-icons/fa";
+import { BsShieldLock } from "react-icons/bs";
 
 type Connection = {
   name: string;
@@ -314,7 +314,7 @@ export default definePlugin(() => {
     name: "TunnelDeck",
     titleView: <div className={staticClasses.Title}>TunnelDeck</div>,
     content: <Content />,
-    icon: <FaShieldAlt />,
+    icon: <BsShieldLock />,
     onDismount() {
       clearTimeout(interfaceCheckerId);
     },
