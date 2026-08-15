@@ -1,4 +1,4 @@
-# TunnelDeck [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/ZU74G2NJzk)
+# TunnelDeck [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://deckbrew.xyz/discord)
 
 ![TunnelDeck Screenshot](https://user-images.githubusercontent.com/1169297/199478837-e3676b09-50a4-463b-ba03-46974d96537c.png)
 
@@ -43,6 +43,7 @@ Open the quick access menu by clicking the **...** on your Steam Deck and select
 
 ## Credits
 
+- [Jérémy Ruelle](https://github.com/bkohler616) - Developer, upgrading the stack
 - [Benjamin Kohler](https://github.com/bkohler616) - Developer
 - [Stephen Radford](https://twitter.com/steve228uk) - Original Developer
 - [AAGaming](https://aa.catvibers.me) - Answering Stephen's annoying questions
