@@ -7,7 +7,6 @@
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "package": "rollup -c && shx rm -rf out && shx mkdir -p out/TunnelDeck && shx cp -r dist out/TunnelDeck && shx cp plugin.json main.py package.json LICENSE README.md out/TunnelDeck && cd out/ && zip -rq ./tunneldeck-${npm_package_version}.zip TunnelDeck/*"
-
   },
   "repository": {
     "type": "git",
@@ -20,19 +19,23 @@
     "steam-deck",
     "deck"
   ],
-  "contributors": [{
-    "name": "Benjamin Kohler",
-    "email": "bkohler616@hotmail.com",
-    "url": "https://github.com/bkohler616"
-  }, {
-    "name": "Stephen Radford",
-    "email": "steve228uk@gmail.com",
-    "url": "https://twitter.com/steve228uk"
-  }, {
-    "name": "Jeremy Ruelle",
-    "email": "jeremy.ruelle23@hotmail.fr",
-    "url": "https://github.com/jruelle23"
-  }],
+  "contributors": [
+    {
+      "name": "Benjamin Kohler",
+      "email": "bkohler616@hotmail.com",
+      "url": "https://github.com/bkohler616"
+    },
+    {
+      "name": "Stephen Radford",
+      "email": "steve228uk@gmail.com",
+      "url": "https://twitter.com/steve228uk"
+    },
+    {
+      "name": "Jeremy Ruelle",
+      "email": "jeremy.ruelle23@hotmail.fr",
+      "url": "https://github.com/jruelle23"
+    }
+  ],
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/jruelle23/TunnelDeck/issues"
