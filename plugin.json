@@ -1,6 +1,7 @@
 {
   "name": "TunnelDeck",
   "author": "Benjamin Kohler",
+  "api_version": 1,
   "flags": ["root"],
   "publish": {
     "tags": ["vpn", "root"],
