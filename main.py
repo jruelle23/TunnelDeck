@@ -233,6 +233,8 @@ class Plugin:
                 return {"success": False, "data": "N/A", "gateway_ping": False}
 
             nmcli_result = run_cmd(["nmcli", "-f", "all", "-t", "device", "show", interface_name['data']])
+            
+            # TODO apply suggested improvement
             nmcli_res: list[str] = nmcli_result.stdout.splitlines() if nmcli_result else []
             logger.debug("get_prioritized_network_info nmcli_res %s", nmcli_res)
 
@@ -338,7 +340,7 @@ class Plugin:
     async def can_ping_address(self, address: str) -> bool:
         logger.debug("Pinging %s", address)
         ping_data = run_cmd(["ping", "-c", "1", "-W", "5", address])
-        ping_res = ping_data is not None and not ping_data.stderr
+        ping_res = ping_data is not None and ping_data.returncode == 0
         if not ping_res:
             self.current_data['ping_results'].append({
                 'address': address,
@@ -415,8 +417,8 @@ class Plugin:
             return True
 
         logger.info("DISABLING IPV6 for: " + connection["uuid"])
-        subprocess.run(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "disabled"])
-        subprocess.run(["systemctl", "restart", "NetworkManager"])
+        run_cmd(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "disabled"])
+        run_cmd(["nmcli", "connection", "up", connection["uuid"]])
         return True
 
     # Enable IPV6 on currently active connection
@@ -428,6 +430,6 @@ class Plugin:
             return True
 
         logger.info("ENABLING IPV6 for: " + connection["uuid"])
-        subprocess.run(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "auto"])
-        subprocess.run(["systemctl", "restart", "NetworkManager"])
+        run_cmd(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "auto"])
+        run_cmd(["nmcli", "connection", "up", connection["uuid"]])
         return True

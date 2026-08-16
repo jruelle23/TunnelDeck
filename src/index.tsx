@@ -8,7 +8,7 @@ import {
 
 import { callable, definePlugin, toaster } from "@decky/api";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useRef, useState } from "react";
 
 import { BsShieldLock } from "react-icons/bs";
 
@@ -48,8 +48,6 @@ const getPrioritizedNetworkInfo = callable<[], NetworkResponse>(
   "get_prioritized_network_info",
 );
 
-let interfaceCheckerId: number;
-
 const Content: FC = () => {
   const [loaded, setLoaded] = useState(false);
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -60,29 +58,19 @@ const Content: FC = () => {
   const [priorityNetworkInfo, setPriorityNetworkInfo] = useState(["N/A"]);
   const [activeConnection, setActiveConnection] = useState<Connection>();
   const [ipv6Disabled, setIpv6Disabled] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(true); // This is always true on the code-side... idk why.
+  const [isRefreshing, setIsRefreshing] = useState(true);
 
-  const interfaceChecker = () => {
-    clearTimeout(interfaceCheckerId);
-    interfaceCheckerId = window.setTimeout(() => {
-      if (isRefreshing) {
-        return interfaceChecker();
-      }
-
-      getInterfaceData().finally(interfaceChecker);
-    }, 5000);
-  };
+  const isRefreshingRef = useRef(true);
+  const timerRef = useRef<number | undefined>(undefined);
+  const mountedRef = useRef(true);
 
   const collectNetworkInfo = () => {
-    if (isRefreshing && loaded) {
+    if (isRefreshingRef.current && loaded) {
       return;
     }
     setIsRefreshing(true);
-
-    clearTimeout(interfaceCheckerId);
-    window.setTimeout(() => {
-      getInterfaceData().finally(interfaceChecker);
-    }, 1000);
+    clearTimeout(timerRef.current);
+    schedulePoll(1000);
   };
 
   const tryCatchHandler = async <T,>(
@@ -99,7 +87,7 @@ const Content: FC = () => {
   };
 
   const setRefreshState = () => {
-    clearTimeout(interfaceCheckerId);
+    clearTimeout(timerRef.current);
     setIsRefreshing(true);
     setPriorityInterface("N/A");
     setPriorityInterfaceLanIp("N/A");
@@ -109,6 +97,7 @@ const Content: FC = () => {
   };
 
   const getInterfaceData = async () => {
+    isRefreshingRef.current = true;
     setIsRefreshing(true);
     console.debug("TunnelDeck - Collecting interface data");
     try {
@@ -163,15 +152,34 @@ const Content: FC = () => {
       handleError("Error refreshing interface data", e);
     } finally {
       console.debug("TunnelDeck - Finished refreshing");
+      isRefreshingRef.current = false;
       setIsRefreshing(false);
     }
   };
 
+  const schedulePoll = useCallback(
+    (delay = 5000) => {
+      clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(async () => {
+        if (!mountedRef.current) return;
+        if (isRefreshingRef.current) return schedulePoll(); // busy → retry, reads LIVE value
+        await getInterfaceData();
+        if (mountedRef.current) schedulePoll();
+      }, delay);
+    },
+    [getInterfaceData],
+  );
+
   const loadConnections = async () => {
     try {
       const activeConn = await getActiveConnection();
-      setActiveConnection(activeConn);
-      setIpv6Disabled(!!activeConn.ipv6_disabled);
+      if (activeConn) {
+        setActiveConnection(activeConn);
+        setIpv6Disabled(!!activeConn.ipv6_disabled);
+      } else {
+        setActiveConnection(undefined);
+        setIpv6Disabled(false);
+      }
     } catch (error) {
       handleError("Failed to get active connection", error);
     }
@@ -200,35 +208,55 @@ const Content: FC = () => {
     switchValue: boolean,
   ) => {
     setRefreshState();
-    if (switchValue) {
-      await up(connection.uuid);
-    } else {
-      await down(connection.uuid);
+    try {
+      if (switchValue) {
+        await up(connection.uuid);
+      } else {
+        await down(connection.uuid);
+      }
+
+      setConnections((prev) =>
+        prev.map((c) =>
+          c.uuid === connection.uuid ? { ...c, connected: switchValue } : c,
+        ),
+      );
+
+      toaster.toast({
+        title: `Connection ${switchValue ? "enabled" : "disabled"}`,
+        body: `${connection.name} has been ${
+          switchValue ? "enabled" : "disabled"
+        }`,
+      });
+    } catch (error) {
+      handleError("Connection toggle failed", error);
+      await loadConnections();
+    } finally {
+      collectNetworkInfo();
     }
-    collectNetworkInfo();
-    toaster.toast({
-      title: `Connection ${switchValue ? "enabled" : "disabled"}`,
-      body: `${connection.name} has been ${
-        switchValue ? "enabled" : "disabled"
-      }`,
-    });
   };
 
   const toggleIpv6 = async (switchValue: boolean) => {
     setIpv6Disabled(switchValue);
     setRefreshState();
-    if (switchValue) {
-      await disableIpv6();
-    } else {
-      await enableIpv6();
+    try {
+      if (switchValue) {
+        await disableIpv6();
+      } else {
+        await enableIpv6();
+      }
+    } catch (e) {
+      handleError("Failed to toggle IPV6", e);
+    } finally {
+      collectNetworkInfo();
     }
-    collectNetworkInfo();
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     loadConnections();
     return () => {
-      clearTimeout(interfaceCheckerId);
+      mountedRef.current = false;
+      clearTimeout(timerRef.current);
     };
   }, []);
 
@@ -241,7 +269,7 @@ const Content: FC = () => {
 
         {connections.length > 0 &&
           connections.map((connection) => (
-            <PanelSectionRow>
+            <PanelSectionRow key={connection.uuid}>
               <ToggleField
                 bottomSeparator="standard"
                 checked={connection.connected}
@@ -304,8 +332,8 @@ const Content: FC = () => {
         )}
 
         {priorityNetworkInfo.length > 0 &&
-          priorityNetworkInfo.map((infoItem) => (
-            <PanelSectionRow>
+          priorityNetworkInfo.map((infoItem, index) => (
+            <PanelSectionRow key={`${infoItem}-${index}`}>
               <Field description={infoItem} focusable={true} padding={"none"} />
             </PanelSectionRow>
           ))}
@@ -328,8 +356,5 @@ export default definePlugin(() => {
     titleView: <div className={staticClasses.Title}>TunnelDeck</div>,
     content: <Content />,
     icon: <BsShieldLock />,
-    onDismount() {
-      clearTimeout(interfaceCheckerId);
-    },
   };
 });
