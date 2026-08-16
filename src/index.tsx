@@ -206,6 +206,12 @@ const Content: FC = () => {
       await down(connection.uuid);
     }
     collectNetworkInfo();
+    toaster.toast({
+      title: `Connection ${switchValue ? "enabled" : "disabled"}`,
+      body: `${connection.name} has been ${
+        switchValue ? "enabled" : "disabled"
+      }`,
+    });
   };
 
   const toggleIpv6 = async (switchValue: boolean) => {
