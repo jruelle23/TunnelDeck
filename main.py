@@ -1,3 +1,4 @@
+import decky;
 import json
 import logging
 import pprint
@@ -7,7 +8,8 @@ import traceback
 from typing import Any, Optional, TypedDict
 from settings import SettingsManager
 
-logging.basicConfig(filename="/tmp/tunneldeck.log",
+
+logging.basicConfig(filename=decky.DECKY_PLUGIN_LOG_DIR + "/tunneldeck.log",
                     format="[TunnelDeck] %(asctime)s %(levelname)s %(message)s",
                     filemode="w+",
                     force=True)
@@ -16,7 +18,6 @@ logger.setLevel(logging.INFO)
 
 IPV6_GATEWAY_KEYS = ['IP6.GATEWAY', 'IP6.DNS[3]', 'IP6.DNS[2]', 'IP6.DNS[1]']
 IPV4_GATEWAY_KEYS = ['IP4.GATEWAY', 'IP4.DNS[3]', 'IP4.DNS[2]', 'IP4.DNS[1]']
-
 
 class Connection(TypedDict):
     name: str
@@ -428,42 +429,3 @@ class Plugin:
         subprocess.run(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "auto"])
         subprocess.run(["systemctl", "restart", "NetworkManager"])
         return True
-
-    # Checks if the OpenVPN package is installed
-    async def is_openvpn_pacman_installed(self) -> bool:
-        try:
-            subprocess.run(["pacman", "-Qi", "networkmanager-openvpn"], check=True)
-            return True
-        except subprocess.CalledProcessError:
-            return False
-
-    # The OpenVPN setting
-    async def is_openvpn_enabled(self) -> bool:
-        return bool(self.settings.getSetting("openvpn_enabled", False))
-
-    # Enable OpenVPN
-    async def enable_openvpn(self) -> bool:
-        logger.info("Enabling OpenVPN")
-        await self.reset_cached_data()
-        self.settings.setSetting("openvpn_enabled", True)
-        return True
-
-    # Disable OpenVPN
-    async def disable_openvpn(self) -> bool:
-        logger.info("Disabling OpenVPN")
-        await self.reset_cached_data()
-        self.settings.setSetting("openvpn_enabled", False)
-        return True
-
-    # endregion
-
-    async def set_logging_type(self, logging_type: str) -> None:
-        if 'I' in logging_type.upper():
-            logger.setLevel(logging.INFO)
-            return
-
-        if 'D' in logging_type.upper():
-            logger.setLevel(logging.DEBUG)
-            return
-
-        logger.setLevel(logging.INFO if logger.level == logging.DEBUG else logging.DEBUG)
