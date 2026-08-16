@@ -1,3 +1,5 @@
+# Clone this subdirectory of decky-loader to the root of this plugin, 
+# so it's imports can be resolved: https://github.com/SteamDeckHomebrew/decky-loader/tree/main/backend/decky_loader
 import decky;
 import json
 import logging
