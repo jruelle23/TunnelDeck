@@ -60,14 +60,11 @@ const Content: FC = () => {
   const [ipv6Disabled, setIpv6Disabled] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(true);
 
-  const isRefreshingRef = useRef(true);
+  const isRefreshingRef = useRef(false);
   const timerRef = useRef<number | undefined>(undefined);
   const mountedRef = useRef(true);
 
   const collectNetworkInfo = () => {
-    if (isRefreshingRef.current && loaded) {
-      return;
-    }
     setIsRefreshing(true);
     clearTimeout(timerRef.current);
     schedulePoll(1000);
