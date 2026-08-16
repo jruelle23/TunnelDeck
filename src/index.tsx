@@ -6,7 +6,7 @@ import {
   Field,
 } from "@decky/ui";
 
-import { callable, definePlugin } from "@decky/api";
+import { callable, definePlugin, toaster } from "@decky/api";
 
 import { FC, useEffect, useState } from "react";
 
@@ -93,7 +93,7 @@ const Content: FC = () => {
     try {
       return await func();
     } catch (e) {
-      console.error("Error handling function", name);
+      handleError(`Error handling function ${name}`, e);
       return defaultRes;
     }
   };
@@ -110,7 +110,7 @@ const Content: FC = () => {
 
   const getInterfaceData = async () => {
     setIsRefreshing(true);
-    console.log("TunnelDeck - Collecting interface data");
+    console.debug("TunnelDeck - Collecting interface data");
     try {
       await tryCatchHandler(
         "reset_cached_data",
@@ -160,9 +160,9 @@ const Content: FC = () => {
         pPriorityNetworkInfo,
       ]);
     } catch (e) {
-      console.error("TunnelDeck - Error: ", e);
+      handleError("Error refreshing interface data", e);
     } finally {
-      console.log("TunnelDeck - Finished refreshing");
+      console.debug("TunnelDeck - Finished refreshing");
       setIsRefreshing(false);
     }
   };
@@ -173,8 +173,7 @@ const Content: FC = () => {
       setActiveConnection(activeConn);
       setIpv6Disabled(!!activeConn.ipv6_disabled);
     } catch (error) {
-      //TODO add proper error handling on all catches
-      console.error(error);
+      handleError("Failed to get active connection", error);
     }
 
     try {
@@ -189,7 +188,7 @@ const Content: FC = () => {
 
       setConnections(filtered);
     } catch (error) {
-      console.error(error);
+      handleError("Failed to get connections", error);
     }
 
     setLoaded(true);
@@ -308,6 +307,14 @@ const Content: FC = () => {
     </>
   );
 };
+
+function handleError(title: string, error: unknown) {
+  console.error(title, error);
+  toaster.toast({
+    title: title,
+    body: error instanceof Error ? error.message : "Unknown error",
+  });
+}
 
 export default definePlugin(() => {
   return {
