@@ -4,6 +4,7 @@
 # Editors
 .vscode/settings.json
 .idea
+.github
 *.iml
 
 # OS metadata
