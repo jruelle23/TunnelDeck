@@ -13,7 +13,7 @@ def run_cmd(
     try:
         return subprocess.run(args, text=True, capture_output=True, timeout=timeout)
     except (subprocess.TimeoutExpired, OSError) as e:
-        logger.error("Error occurred while running command: ${args.join(' ')}", e)
+        logger.error(f"Error occurred while running command: {' '.join(args)}: {e}")
         return None
 
 

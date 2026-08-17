@@ -1,5 +1,11 @@
-# Clone this linked subdirectory of decky-loader to the root of this plugin,
-# so it's imports can be resolved: https://github.com/SteamDeckHomebrew/decky-loader/tree/main/backend/decky_loader
+import os
+import sys
+
+# FIX: Ensure the plugin root is in sys.path
+# Without that, the backend module can't be resolved
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
 import backend as net
 from backend import (
     CachedData,
@@ -81,6 +87,9 @@ class Plugin:
         return net.enable_ipv6()
 
     # Reset all cached network information.
+    async def reset_cached_data(self) -> bool:
+        return self.__reset_cached_data()
+    
     def __reset_cached_data(self) -> bool:
         logger.debug(
             f"reset_cached_data called - Separator - Last set was {log_pretty(self.current_data)}"
