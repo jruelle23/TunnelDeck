@@ -6,7 +6,11 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "package": "rollup -c && shx rm -rf out && shx mkdir -p out/TunnelDeck && shx cp -r dist out/TunnelDeck && shx cp plugin.json main.py package.json LICENSE README.md out/TunnelDeck && cd out/ && zip -rq ./tunneldeck-${npm_package_version}.zip TunnelDeck/*"
+    "prepackage": "npm run build",
+    "clean": "shx rm -rf out && shx mkdir -p out/TunnelDeck",
+    "stage": "shx cp -r dist plugin.json main.py package.json LICENSE README.md out/TunnelDeck",
+    "zip": "python script/zip.py out/TunnelDeck out/tunneldeck-${npm_package_version}",
+    "package": "npm run build && npm run clean && npm run stage && npm run zip"
   },
   "repository": {
     "type": "git",
