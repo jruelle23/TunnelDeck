@@ -20,14 +20,6 @@
             "problemMatcher": []
         },
         {
-            "label": "updatefrontendlib",
-            "type": "shell",
-            "group": "build",
-            "detail": "Update deck-frontend-lib",
-            "command": "pnpm update decky-frontend-lib --latest",
-            "problemMatcher": []
-        },
-        {
             "label": "build",
             "type": "npm",
             "group": "build",

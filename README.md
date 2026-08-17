@@ -10,7 +10,6 @@ If you want to get in contact with the developers, we can be found in the **[Ste
 
 ## Settings
 
-- **Enable OpenVPN:** Installs the Network Manager OpenVPN plugin.
 - **Disable IPV6:** - Disables IPV6 traffic on the current network connect (e.g. wlan). May be required for some VPNs that do not fully support IPV6.
 
 ## :warning: Disclaimer :warning:
@@ -21,7 +20,7 @@ Using a VPN to access Steam is **against their terms of service** and the develo
 
 ## Usage
 
-Connecting to a VPN in TunnelDeck currently requires it to be setup in desktop mode — usually with a `.conf` or `.ovpn` file provided my your VPN provider.
+Connecting to a VPN in TunnelDeck currently requires it to be setup in desktop mode — usually with a `.conf` or `.ovpn` file provided by your VPN provider.
 
 ### VPN Connection Creation/Import
 
@@ -43,15 +42,8 @@ Open the quick access menu by clicking the **...** on your Steam Deck and select
 
 ## Credits
 
-- [Jérémy Ruelle](https://github.com/bkohler616) - Developer, upgrading the stack
+- [Jérémy Ruelle](https://github.com/jruelle23) - Developer
 - [Benjamin Kohler](https://github.com/bkohler616) - Developer
 - [Stephen Radford](https://twitter.com/steve228uk) - Original Developer
 - [AAGaming](https://aa.catvibers.me) - Answering Stephen's annoying questions
 - [Kevin Wammer](https://overkill.wtf) - Idea and name
-
-## Building the Plugin Manually
-
-```bash
-pnpm i
-pnpm run build
-```

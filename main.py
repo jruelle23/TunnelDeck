@@ -1,22 +1,17 @@
+# Clone this subdirectory of decky-loader to the root of this plugin, 
+# so it's imports can be resolved: https://github.com/SteamDeckHomebrew/decky-loader/tree/main/backend/decky_loader
+import decky;
 import json
 import logging
 import pprint
 import re
 import subprocess
 import traceback
-from os import path
 from typing import Any, Optional, TypedDict
+from settings import SettingsManager
 
-# TODO redo the import of decky to match current standard
-# These modules are provided by the Decky runtime and are not resolvable outside the Steam Deck.
-from settings import SettingsManager  # type: ignore[import-not-found]
-from helpers import get_user  # type: ignore[import-not-found]
 
-USER: str = get_user()
-HOME_PATH: str = "/home/" + USER
-HOMEBREW_PATH: str = HOME_PATH + "/homebrew"
-
-logging.basicConfig(filename="/tmp/tunneldeck.log",
+logging.basicConfig(filename=decky.DECKY_PLUGIN_LOG_DIR + "/tunneldeck.log",
                     format="[TunnelDeck] %(asctime)s %(levelname)s %(message)s",
                     filemode="w+",
                     force=True)
@@ -25,7 +20,6 @@ logger.setLevel(logging.INFO)
 
 IPV6_GATEWAY_KEYS = ['IP6.GATEWAY', 'IP6.DNS[3]', 'IP6.DNS[2]', 'IP6.DNS[1]']
 IPV4_GATEWAY_KEYS = ['IP4.GATEWAY', 'IP4.DNS[3]', 'IP4.DNS[2]', 'IP4.DNS[1]']
-
 
 class Connection(TypedDict):
     name: str
@@ -136,7 +130,7 @@ def empty_cached_data() -> CachedData:
 
 
 class Plugin:
-    settings: SettingsManager = SettingsManager("tunneldeck", path.join(HOMEBREW_PATH, "settings"))
+    settings: SettingsManager = SettingsManager("tunneldeck")
     # Cached data to prevent redundant calls.
     current_data: CachedData = empty_cached_data()
 
@@ -239,6 +233,8 @@ class Plugin:
                 return {"success": False, "data": "N/A", "gateway_ping": False}
 
             nmcli_result = run_cmd(["nmcli", "-f", "all", "-t", "device", "show", interface_name['data']])
+            
+            # TODO apply suggested improvement
             nmcli_res: list[str] = nmcli_result.stdout.splitlines() if nmcli_result else []
             logger.debug("get_prioritized_network_info nmcli_res %s", nmcli_res)
 
@@ -344,7 +340,7 @@ class Plugin:
     async def can_ping_address(self, address: str) -> bool:
         logger.debug("Pinging %s", address)
         ping_data = run_cmd(["ping", "-c", "1", "-W", "5", address])
-        ping_res = ping_data is not None and not ping_data.stderr
+        ping_res = ping_data is not None and ping_data.returncode == 0
         if not ping_res:
             self.current_data['ping_results'].append({
                 'address': address,
@@ -421,8 +417,8 @@ class Plugin:
             return True
 
         logger.info("DISABLING IPV6 for: " + connection["uuid"])
-        subprocess.run(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "disabled"])
-        subprocess.run(["systemctl", "restart", "NetworkManager"])
+        run_cmd(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "disabled"])
+        run_cmd(["nmcli", "connection", "up", connection["uuid"]])
         return True
 
     # Enable IPV6 on currently active connection
@@ -434,45 +430,6 @@ class Plugin:
             return True
 
         logger.info("ENABLING IPV6 for: " + connection["uuid"])
-        subprocess.run(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "auto"])
-        subprocess.run(["systemctl", "restart", "NetworkManager"])
+        run_cmd(["nmcli", "connection", "modify", connection["uuid"], "ipv6.method", "auto"])
+        run_cmd(["nmcli", "connection", "up", connection["uuid"]])
         return True
-
-    # Checks if the OpenVPN package is installed
-    async def is_openvpn_pacman_installed(self) -> bool:
-        try:
-            subprocess.run(["pacman", "-Qi", "networkmanager-openvpn"], check=True)
-            return True
-        except subprocess.CalledProcessError:
-            return False
-
-    # The OpenVPN setting
-    async def is_openvpn_enabled(self) -> bool:
-        return bool(self.settings.getSetting("openvpn_enabled", False))
-
-    # Enable OpenVPN
-    async def enable_openvpn(self) -> bool:
-        logger.info("Enabling OpenVPN")
-        await self.reset_cached_data()
-        self.settings.setSetting("openvpn_enabled", True)
-        return True
-
-    # Disable OpenVPN
-    async def disable_openvpn(self) -> bool:
-        logger.info("Disabling OpenVPN")
-        await self.reset_cached_data()
-        self.settings.setSetting("openvpn_enabled", False)
-        return True
-
-    # endregion
-
-    async def set_logging_type(self, logging_type: str) -> None:
-        if 'I' in logging_type.upper():
-            logger.setLevel(logging.INFO)
-            return
-
-        if 'D' in logging_type.upper():
-            logger.setLevel(logging.DEBUG)
-            return
-
-        logger.setLevel(logging.INFO if logger.level == logging.DEBUG else logging.DEBUG)
