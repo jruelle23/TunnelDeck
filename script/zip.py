@@ -13,7 +13,7 @@ def create_archive() -> None:
 
     try:
         created = shutil.make_archive(
-            base_name=str(output),
+            base_name=str(output.with_suffix("") if output.suffix == ".zip" else output),
             format="zip",
             root_dir=str(source.parent),
             base_dir=source.name,
