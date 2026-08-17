@@ -1,6 +1,6 @@
-from backend.config import DEFAULT_CMD_TIMEOUT
-from backend.logger import logger
-from backend.models import Connection
+from .config import DEFAULT_CMD_TIMEOUT
+from .logger import logger
+from .models import Connection
 import re
 import subprocess
 from typing import Optional

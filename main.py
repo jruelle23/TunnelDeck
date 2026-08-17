@@ -1,20 +1,21 @@
 # Clone this linked subdirectory of decky-loader to the root of this plugin,
 # so it's imports can be resolved: https://github.com/SteamDeckHomebrew/decky-loader/tree/main/backend/decky_loader
-from backend.logger import logger, log_pretty
-import backend.network as net
-from backend.models import (
-    Connection,
-    PriorityInterface,
-    NetworkInfo,
+import backend as net
+from backend import (
     CachedData,
+    Connection,
+    NetworkInfo,
+    PriorityInterface,
     empty_cached_data,
+    log_pretty,
+    logger,
 )
 
 from typing import Optional
 
 
 class Plugin:
-    def __init__(self) -> None:
+    def __init__(self):
         # Cached data to prevent redundant calls.
         self.current_data: CachedData = empty_cached_data()
 

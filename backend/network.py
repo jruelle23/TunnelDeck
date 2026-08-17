@@ -1,19 +1,19 @@
 import json
-from backend.logger import logger, log_pretty
-from backend.network_utils import (
+from .logger import logger, log_pretty
+from .network_utils import (
     run_cmd,
     connection_mapper,
     get_active_connection,
     gateway_finder,
 )
-from backend.models import (
+from .models import (
     Connection,
     PriorityInterface,
     NetworkInfo,
     CachedData,
     bad_response,
 )
-from backend.config import (
+from .config import (
     IPV4_GATEWAY_KEYS,
     IPV6_GATEWAY_KEYS,
     STEAM_HOSTNAME,
