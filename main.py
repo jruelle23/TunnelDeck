@@ -67,7 +67,8 @@ def run_cmd(args: list[str], timeout: int = 15) -> Optional[subprocess.Completed
     """Run a command with capture, returning None on timeout."""
     try:
         return subprocess.run(args, text=True, capture_output=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
+    except (subprocess.TimeoutExpired, OSError) as e:
+        logger.error("Error occurred while running command: ${args.join(' ')}", e)
         return None
 
 
@@ -158,7 +159,7 @@ class Plugin:
     async def get_steam_ip(self) -> Optional[str]:
         logger.debug("Collecting steam's IP")
         getent_data = run_cmd(["getent", "ahosts", "steampowered.com"])
-        if getent_data is None or (getent_data.stderr and not getent_data.stdout):
+        if getent_data is None:
             return None
         for line in getent_data.stdout.splitlines():
             if "STREAM" in line:
@@ -187,7 +188,7 @@ class Plugin:
             ip_data = run_cmd(["ip", "-j", "route", "get", steam_ip])
             logger.debug("get_priority_interface - got ip route data")
             result: PriorityInterface
-            if ip_data is None or ip_data.stderr or not ip_data.stdout:
+            if ip_data is None:
                 result = bad_response()
             else:
                 try:
