@@ -31,22 +31,6 @@ def connection_mapper(xn: str) -> Connection:
     }
 
 
-def gateway_finder(new_id: str, parser_type: int) -> Optional[str]:
-    if parser_type == 0:
-        # IPV4 - value after the first ':'
-        return new_id.split(":", 1)[1] if ":" in new_id else None
-    if parser_type == 1:
-        # IPV6 - value (with colons) after the first ':'
-        return new_id.split(":", 1)[1] if ":" in new_id else None
-    if parser_type == 2:
-        # :domain_name_servers = 8.8.8.8 192.168.2.1 -> last DNS entry
-        if "=" not in new_id:
-            return None
-        servers = new_id.split("=", 1)[1].split()
-        return servers[-1] if servers else None
-    return None
-
-
 def find_gateway(
     nmcli_data: dict[str, str], ipv6_disabled: bool = False
 ) -> Optional[str]:
@@ -63,15 +47,6 @@ def find_gateway(
         if val:
             logger.debug(f"BIG - Gateway is now {val}")
             return val
-
-    for k, v in nmcli_data.items():
-        if (":domain_name_servers" in k or "domain_name_servers" in v) and v:
-            logger.debug(
-                f"BIG - :domain_name_servers :::: {log_pretty(k)} :::: {log_pretty(v)}"
-            )
-            gw = gateway_finder(f"{k}:{v}", 2)
-            if gw:
-                return gw
 
     return None
 
