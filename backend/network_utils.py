@@ -1,5 +1,5 @@
-from .config import DEFAULT_CMD_TIMEOUT
-from .logger import logger
+from .config import DEFAULT_CMD_TIMEOUT, IPV4_GATEWAY_KEYS, IPV6_GATEWAY_KEYS, NMCLI_MULTI_VALUED_FIELD_SUFFIX_MAP
+from .logger import logger, log_pretty
 from .models import Connection
 import re
 import subprocess
@@ -47,6 +47,35 @@ def gateway_finder(new_id: str, parser_type: int) -> Optional[str]:
     return None
 
 
+def find_gateway(
+    nmcli_data: dict[str, str], ipv6_disabled: bool = False
+) -> Optional[str]:
+    """Find the priority gateway or DNS server address from nmcli data."""
+    if not ipv6_disabled:
+        for key in IPV6_GATEWAY_KEYS:
+            val = nmcli_data.get(key)
+            if val:
+                logger.debug(f"BIG - Gateway is now {val}")
+                return val
+
+    for key in IPV4_GATEWAY_KEYS:
+        val = nmcli_data.get(key)
+        if val:
+            logger.debug(f"BIG - Gateway is now {val}")
+            return val
+
+    for k, v in nmcli_data.items():
+        if (":domain_name_servers" in k or "domain_name_servers" in v) and v:
+            logger.debug(
+                f"BIG - :domain_name_servers :::: {log_pretty(k)} :::: {log_pretty(v)}"
+            )
+            gw = gateway_finder(f"{k}:{v}", 2)
+            if gw:
+                return gw
+
+    return None
+
+
 def get_active_connection() -> Optional[Connection]:
     result = run_cmd(["nmcli", "-t", "connection", "show", "--active"])
     if result is None:
@@ -56,3 +85,37 @@ def get_active_connection() -> Optional[Connection]:
         filter(lambda xn: "wireless" in xn["type"] or "ethernet" in xn["type"], mapped),
         None,
     )
+
+def get_pattern_label(key: str) -> Optional[str]:
+    """Returns the matching label for a key, or None if no match."""
+    for pattern, label in NMCLI_MULTI_VALUED_FIELD_SUFFIX_MAP.items():
+        if pattern in key:
+            return label
+    return None
+
+
+def collect_pattern_groups(nmcli_map: dict[str, str]) -> dict[str, list[str]]:
+    """Groups nmcli values into pre-filled categories."""
+    groups: dict[str, list[str]] = {
+        label: [] for label in NMCLI_MULTI_VALUED_FIELD_SUFFIX_MAP.values()
+    }
+
+    for key, value in nmcli_map.items():
+        if not value:
+            continue
+
+        label = get_pattern_label(key)
+        if label:
+            groups[label].append(value)
+
+    return groups
+
+
+def format_grouped_network_info(groups: dict[str, list[str]]) -> list[str]:
+    """Formats grouped values into newline-separated strings."""
+    result: list[str] = []
+    for label, values in groups.items():
+        if values:
+            linebreaked_values = '\n' + ('\n'.join(values) if values is not [] else 'NONE FOUND')
+            result.append(f"{label}:{linebreaked_values}")
+    return result

@@ -1,6 +1,6 @@
 {
   "name": "tunneldeck",
-  "version": "2.1.2",
+  "version": "2.1.6",
   "description": "Enables VPN support within Gaming Mode.",
   "type": "module",
   "scripts": {
@@ -47,7 +47,7 @@
   "homepage": "https://github.com/jruelle23/TunnelDeck#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
-    "@types/react": "19.2.18",
+    "@types/react": "^19.2.18",
     "rollup": "^4.62.4",
     "shx": "^0.4.0",
     "typescript": "^5.9.3"

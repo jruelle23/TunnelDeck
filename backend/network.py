@@ -1,10 +1,12 @@
 import json
 from .logger import logger, log_pretty
 from .network_utils import (
+    collect_pattern_groups,
+    format_grouped_network_info,
     run_cmd,
     connection_mapper,
     get_active_connection,
-    gateway_finder,
+    find_gateway,
 )
 from .models import (
     Connection,
@@ -14,8 +16,7 @@ from .models import (
     bad_response,
 )
 from .config import (
-    IPV4_GATEWAY_KEYS,
-    IPV6_GATEWAY_KEYS,
+    NMCLI_FIELD_PREFIX_MAP,
     STEAM_HOSTNAME,
     PING_TIMEOUT,
     PING_COUNT,
@@ -111,78 +112,30 @@ def get_prioritized_network_info(current_data: CachedData) -> NetworkInfo:
             ["nmcli", "-f", "all", "-t", "device", "show", interface_name["data"]]
         )
 
-        # TODO apply suggested improvement
-        nmcli_res: list[str] = nmcli_result.stdout.splitlines() if nmcli_result else []
-        logger.debug("get_prioritized_network_info nmcli_res %s", nmcli_res)
+        nmcli_map: dict[str, str] = {}
+        if nmcli_result:
+            for line in nmcli_result.stdout.splitlines():
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    nmcli_map[key] = value
+
+        logger.debug("get_prioritized_network_info nmcli_map %s", nmcli_map)
 
         network_info: list[str] = []
 
-        collected_gateway: Optional[str] = None
-        for e in nmcli_res:
-            parts = e.split(":")
-            found_value: Optional[str] = parts[1] if len(parts) > 1 else None
-            # region Priority network data
-            if "GENERAL.DEVICE" in e and found_value:
-                network_info.append(f"DEVICE: {found_value}")
-            if "GENERAL.TYPE" in e and found_value:
-                network_info.append(f"TYPE: {found_value}")
-            if "GENERAL.STATE" in e and found_value:
-                network_info.append(f"STATE: {found_value}")
-            if "GENERAL.REASON" in e and found_value:
-                network_info.append(f"REASON: {found_value}")
-            if "GENERAL.IP4-CONNECTIVITY" in e and found_value:
-                network_info.append(f"IP4-CONN: {found_value}")
-            if "GENERAL.IP6-CONNECTIVITY" in e and found_value:
-                network_info.append(f"IP6-CONN: {found_value}")
-            if "GENERAL.IP-IFACE" in e and found_value:
-                network_info.append(f"IP-IFACE: {found_value}")
-            if "GENERAL.CONNECTION" in e and found_value:
-                network_info.append(f"CONNECTION: {found_value}")
-            if "GENERAL.METERED" in e and found_value:
-                network_info.append(f"METERED: {found_value}")
-            if "CAPABILITIES.SPEED" in e and found_value:
-                network_info.append(f"SPEED: {found_value}")
+        # Priority network data
+        for field_key, prefix in NMCLI_FIELD_PREFIX_MAP.items():
+            value = nmcli_map.get(field_key)
+            if value:
+                network_info.append(f"{prefix}: {value}")
 
-            if ".ADDRESS" in e and found_value:
-                item = e.split(":")
-                network_info.append(f"{item.pop(0)}: {':'.join(item)}")
-            if ".GATEWAY" in e and found_value:
-                item = e.split(":")
-                item.pop(0)
-                network_info.append(f"{e.split(':')[0]}: {':'.join(item)}")
-            if ".DNS" in e and found_value:
-                item = e.split(":")
-                item.pop(0)
-                network_info.append(f"{e.split(':')[0]}: {':'.join(item)}")
-            # endregion
-            # region gateway data
-            if not connection_data["ipv6_disabled"]:
-                for key in IPV6_GATEWAY_KEYS:
-                    if collected_gateway:
-                        break
-                    logger.debug(
-                        f"BIG - {log_pretty(key)} :::: {log_pretty(e)} :::: {log_pretty(found_value)}"
-                    )
-                    if key in e and found_value:
-                        collected_gateway = gateway_finder(e, 1)
-                        logger.debug(f"BIG - Gateway is now {collected_gateway}")
-                        break
-            for key in IPV4_GATEWAY_KEYS:
-                if collected_gateway:
-                    break
-                logger.debug(
-                    f"BIG - {log_pretty(key)} :::: {log_pretty(e)} :::: {log_pretty(found_value)}"
-                )
-                if key in e and found_value:
-                    collected_gateway = gateway_finder(e, 0)
-                    logger.debug(f"BIG - Gateway is now {collected_gateway}")
+        pattern_groups = collect_pattern_groups(nmcli_map)
+        network_info.extend(format_grouped_network_info(pattern_groups))
 
-            if not collected_gateway and ":domain_name_servers" in e and found_value:
-                logger.debug(
-                    f"BIG - :domain_name_servers :::: {log_pretty(e)} :::: {log_pretty(found_value)}"
-                )
-                collected_gateway = gateway_finder(e, 2)
-            # endregion
+        # Gateway data (we want to ping only the ipv4 interface)
+        collected_gateway = find_gateway(
+            nmcli_map, ipv6_disabled=True
+        )
         if collected_gateway is None:
             logger.debug("get_prioritized_network_info did not find a gateway address")
             gateway_ping = False

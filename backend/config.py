@@ -23,7 +23,7 @@ IPV4_GATEWAY_KEYS: Final[tuple[str, ...]] = (
     "IP4.DNS[1]",
 )
 
-# nmcli prefix mappings for device status, TODO use it
+# nmcli prefix mappings for device status
 NMCLI_FIELD_PREFIX_MAP: Final[dict[str, str]] = {
     "GENERAL.DEVICE": "DEVICE",
     "GENERAL.TYPE": "TYPE",
@@ -35,4 +35,10 @@ NMCLI_FIELD_PREFIX_MAP: Final[dict[str, str]] = {
     "GENERAL.CONNECTION": "CONNECTION",
     "GENERAL.METERED": "METERED",
     "CAPABILITIES.SPEED": "SPEED",
+}
+
+NMCLI_MULTI_VALUED_FIELD_SUFFIX_MAP: Final[dict[str, str]] = {
+    ".ADDRESS": "ADDRESSES",
+    ".GATEWAY": "GATEWAYS",
+    ".DNS": "DNS LIST",
 }
