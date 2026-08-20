@@ -22,7 +22,7 @@ importers:
         specifier: ^1.0.2
         version: 1.0.2
       '@types/react':
-        specifier: 19.2.18
+        specifier: ^19.2.18
         version: 19.2.18
       rollup:
         specifier: ^4.62.4

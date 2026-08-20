@@ -1,13 +1,13 @@
 {
   "name": "tunneldeck",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "Enables VPN support within Gaming Mode.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "clean": "shx rm -rf out && shx mkdir -p out/TunnelDeck",
-    "stage": "shx cp -r dist plugin.json main.py package.json LICENSE README.md out/TunnelDeck",
+    "stage": "shx cp -r dist backend plugin.json main.py package.json LICENSE README.md out/TunnelDeck",
     "zip": "python script/zip.py out/TunnelDeck out/tunneldeck-${npm_package_version}.zip",
     "prepackage": "npm run build",
     "package": "npm run clean && npm run stage && npm run zip"
@@ -47,7 +47,7 @@
   "homepage": "https://github.com/jruelle23/TunnelDeck#readme",
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
-    "@types/react": "19.2.18",
+    "@types/react": "^19.2.18",
     "rollup": "^4.62.4",
     "shx": "^0.4.0",
     "typescript": "^5.9.3"
